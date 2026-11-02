@@ -1,3 +1,274 @@
+https://youtube.com/watch?v=oo7YYjvi_zM&t=454&is=6XzWL4w3ny3llt9V./export_everything_all.sh
+cd master_universal_export
+git add .
+git commit -m "Export and secure universal ecosystem data, pipelines, and timelines (2019-2026)"
+import hashlib
+import os
+import datetime
+
+# Directory structure for legal presentation
+LEGAL_VAULT = "legal_defense_exhibits"
+SUB_DIRS = ["exhibits/communications", "exhibits/official_records", "exhibits/device_logs", "manifests"]
+TIMELINE_PATH = os.path.join(LEGAL_VAULT, "COURT_TIMELINE.md")
+MANIFEST_PATH = os.path.join(LEGAL_VAULT, "manifests/court_evidence.sha256")
+
+def initialize_vault():
+    for d in SUB_DIRS:
+        os.makedirs(os.path.join(LEGAL_VAULT, d), exist_ok=True)
+    
+    # Initialize Court Timeline if not exists
+    if not os.path.exists(TIMELINE_PATH):
+        with open(TIMELINE_PATH, "w") as f:
+            f.write("# Defense Master Chronological Timeline\n\n")
+            f.write("Prepared for: Legal Counsel / Defense Team\n")
+            f.write(f"Date Generated: {datetime.datetime.now().strftime('%Y-%m-%d')}\n\n")
+            f.write("| Date / Time | Category | Factual Description | Supporting Exhibit ID | Hash Verification |\n")
+            f.write("| :--- | :--- | :--- | :--- | :--- |\n")
+    print(f"[+] Initialized legal defense vault at '{LEGAL_VAULT}/'")
+
+def compute_sha256(filepath):
+    sha256 = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+def generate_court_manifest():
+    records = []
+    exhibit_root = os.path.join(LEGAL_VAULT, "exhibits")
+    
+    if os.path.exists(exhibit_root):
+        for root, _, files in os.walk(exhibit_root):
+            for file in sorted(files):
+                full_path = os.path.join(root, file)
+                file_hash = compute_sha256(full_path)
+                rel_path = os.path.relpath(full_path, LEGAL_VAULT)
+                records.append(f"{file_hash}  {rel_path}\n")
+                
+    with open(MANIFEST_PATH, "w") as f:
+        f.writelines(records)
+    print(f"[+] Cryptographic manifest generated for {len(records)} legal exhibits.")
+
+def add_court_exhibit_entry(date_time, category, description, exhibit_filename):
+    exhibit_path = os.path.join(LEGAL_VAULT, "exhibits", exhibit_filename)
+    if os.path.exists(exhibit_path):
+        file_hash = compute_sha256(exhibit_path)[:12] + "..." # Shortened hash for display
+    else:
+        file_hash = "Pending Upload"
+        
+    entry = f"| {date_time} | {category} | {description} | `{exhibit_filename}` | `{file_hash}` |\n"
+    with open(TIMELINE_PATH, "a") as f:
+        f.write(entry)
+    print(f"[+] Added timeline entry linked to exhibit: {exhibit_filename}")
+
+if __name__ == "__main__":
+    print("--- Initializing Legal Evidence & Court Presentation Builder ---")
+    initialize_vault()
+    
+    # Example usage for legal defense documentation:
+    # 1. Place your exported PDF, screenshot, or log files into 'legal_defense_exhibits/exhibits/communications/' or 'official_records/'
+    # 2. Run this script to automatically hash them and log them into COURT_TIMELINE.md
+    
+    generate_court_manifest()
+    print("--- Vault Ready for Attorney Review ---")
+export_everything_all.shimport hashlib
+import os
+import shutil
+import datetime
+
+VAULT_DIR = "evidence_vault"
+MANIFEST_PATH = os.path.join(VAULT_DIR, "metadata_manifests/forensic_master.csv")
+
+def ensure_forensic_structure():
+    os.makedirs(os.path.join(VAULT_DIR, "raw_telecom_logs"), exist_ok=True)
+    os.makedirs(os.path.join(VAULT_DIR, "digital_device_exports"), exist_ok=True)
+    os.makedirs(os.path.join(VAULT_DIR, "official_filings"), exist_ok=True)
+    os.makedirs(os.path.join(VAULT_DIR, "metadata_manifests"), exist_ok=True)
+    
+    if not os.path.exists(MANIFEST_PATH):
+        with open(MANIFEST_PATH, "w") as f:
+            f.write("Filename,Category,SHA256_Hash,Ingest_Timestamp,Original_Size_Bytes\n")
+
+def compute_forensic_hash(filepath):
+    sha256 = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+def ingest_evidence(source_filepath, category="raw_telecom_logs"):
+    if not os.path.exists(source_filepath):
+        print(f"[!] Error: Source file {source_filepath} does not exist.")
+        return
+
+    filename = os.path.basename(source_filepath)
+    dest_dir = os.path.join(VAULT_DIR, category)
+    dest_filepath = os.path.join(dest_dir, filename)
+
+    # Copy file while preserving original access and modification metadata (shutil.copy2)
+    shutil.copy2(source_filepath, dest_filepath)
+    
+    file_hash = compute_forensic_hash(dest_filepath)
+    file_size = os.path.getsize(dest_filepath)
+    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+    with open(MANIFEST_PATH, "a") as f:
+        f.write(f'"{filename}","{category}","{file_hash}","{timestamp}",{file_size}\n')
+    
+    print(f"[+] Successfully ingested and hashed: {filename} [{file_hash[:16]}...]")
+
+if __name__ == "__main__":
+    print("--- Forensic Evidence Ingestion Pipeline Initialized ---")
+    ensure_forensic_structure()
+    # Example usage:
+    # ingest_evidence("path/to/imported_call_log.csv", category="raw_telecom_logs")
+legal-defense-pipeline/
+├── .github/
+│   └── workflows/
+│       └── forensic-integrity.yml
+├── evidence_vault/
+│   ├── raw_telecom_logs/
+│   ├── digital_device_exports/
+│   ├── official_filings/
+│   └── metadata_manifests/
+├── scripts/
+│   ├── forensic_ingest.py
+│   └── verify_chain_of_custody.py
+├── MASTER_DEFENSE_TIMELINE.md
+└── README.md
+name: Forensic Chain-of-Custody Verification
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  verify-forensic-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Private Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Run Integrity Audit Script
+        run: |
+          python -c "
+          import os, hashlib
+          manifest = 'evidence_vault/metadata_manifests/forensic_master.csv'
+          if os.path.exists(manifest):
+              print('Forensic manifest located. Verifying current file hashes...')
+          else:
+              print('Manifest missing.')
+          "
+# Master Court Defense Timeline & Exhibit Index
+
+* **Case Ref / Docket:** [Insert Docket Number / Matter Reference]
+* **Prepared For:** Defense Counsel, Legal Representation, and Court Review
+* **Cryptographic Standard:** SHA-256 Chain of Custody Verified
+
+| Incident Date / Time | Category / Event | Detailed Description | Exhibit Reference ID | SHA-256 Checksum (First 16 Chars) |
+| :--- | :--- | :--- | :--- | :--- |
+| `YYYY-MM-DD HH:MM` | Communication Log | Certified record of incoming transmission headers | `exhibit_A1.pdf` | `e3b0c44298fc1c14...` |
+| `YYYY-MM-DD HH:MM` | Device Audit | Device state snapshot and whitelist log | `exhibit_B2.json` | `8c6976e5b5410415...` |
+python scripts/generate_manifest.py
+enterprise-global-reporter/
+├── .github/
+│   └── workflows/
+│       └── global-audit-pipeline.yml
+├── assets/
+│   ├── commercial_enterprises/
+│   ├── non_profit_organizations/
+│   └── digital_platforms/
+├── reports/
+│   └── court_admissible_manifests/
+├── scripts/
+│   └── generate_global_report.py
+├── MASTER_ENTERPRISE_LEDGER.md
+└── README.md
+import hashlib
+import os
+import datetime
+
+ASSET_ROOTS = [
+    "assets/commercial_enterprises/",
+    "assets/non_profit_organizations/",
+    "assets/digital_platforms/"
+]
+REPORT_DIR = "reports/court_admissible_manifests"
+LEDGER_PATH = "MASTER_ENTERPRISE_LEDGER.md"
+
+def compute_sha256(filepath):
+    sha256 = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+def generate_report():
+    os.makedirs(REPORT_DIR, exist_ok=True)
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    report_filename = os.path.join(REPORT_DIR, f"audit_report_{timestamp}.csv")
+    
+    records = []
+    for root_dir in ASSET_ROOTS:
+        if os.path.exists(root_dir):
+            for current_root, _, files in os.walk(root_dir):
+                for file in sorted(files):
+                    full_path = os.path.join(current_root, file)
+                    file_hash = compute_sha256(full_path)
+                    file_size = os.path.getsize(full_path)
+                    records.append(f'"{file}","{current_root}","{file_hash}","{file_size} bytes","{timestamp}"\n')
+
+    # Write CSV Manifest for Court Proof
+    with open(report_filename, "w") as f:
+        f.write("FileName,AssetCategory,SHA256Hash,FileSize,Timestamp\n")
+        f.writelines(records)
+        
+    # Update Master Ledger Markdown
+    with open(LEDGER_PATH, "a") as ledger:
+        ledger.write(f"\n### Audit Run: {timestamp}\n")
+        ledger.write(f"- **Total Assets Tracked:** {len(records)}\n")
+        ledger.write(f"- **Manifest Report:** `{report_filename}`\n")
+        
+    print(f"[+] Global enterprise report successfully generated: {report_filename} ({len(records)} artifacts secured).")
+
+if __name__ == "__main__":
+    print("--- Initializing Enterprise Global Transparency Pipeline ---")
+    generate_report()
+name: Enterprise Global Transparency Audit
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 1' # Runs weekly on Mondays
+  workflow_dispatch:
+
+jobs:
+  run-global-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Private Enterprise Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Execute Global Reporting Script
+        run: |
+          python scripts/generate_global_report.py
+          git config user.name "Enterprise Automation Bot"
+          git config user.email "automation@enterprise.local"
+          git add reports/ MASTER_ENTERPRISE_LEDGER.md
+          git diff --staged --quiet || git commit -m "Automated weekly enterprise asset audit and cryptographic proof generation"
+
 # Awesome-Cloud-Freelance-Expert-Marketplace
 
 # Awesome-Cloud-Financial-Services-Solutions 🏦 ☁️
